@@ -21,7 +21,7 @@ def get_json_from_url(url):
 
 
 def get_updates(offset=None):
-    url = URL + 'getUpdates?timeout=10'
+    url = URL + 'getUpdates?timeout=100'
     if offset:
         url += f'&offset={offset}'
     js = get_json_from_url(url)
@@ -40,7 +40,7 @@ def get_last_chat_id_and_text(updates):
     last_update = num_updates - 1
     text = updates["result"][last_update]["message"]["text"]
     chat_id = updates["result"][last_update]["message"]["chat"]["id"]
-    return (text, chat_id)
+    return text, chat_id
 
 
 def send_message(text, chat_id):

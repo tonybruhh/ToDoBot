@@ -47,9 +47,11 @@ def get_last_chat_id_and_text(updates):
     return text, chat_id
 
 
-def send_message(text, chat_id):
+def send_message(text, chat_id, reply_markup=None):
     text = urllib.parse.quote_plus(text)
-    url = URL + f"sendMessage?text={text}&chat_id={chat_id}"
+    url = URL + f"sendMessage?text={text}&chat_id={chat_id}&parse_mode=Markdown"
+    if reply_markup:
+        url += f"&reply_markup={reply_markup}"
     get_url(url)
 
 
@@ -59,16 +61,27 @@ def handle_updates(updates):
             text = update['message']['text']
             chat = update['message']['chat']['id']
             items = db.get_items()
-            if text in items:
+            if text == '/done':
+                keyboard = build_keyboard(items)
+                send_message('Select an item to delete', chat, keyboard)
+            elif text in items:
                 db.delete_item(text)
                 items = db.get_items()
+                keyboard = build_keyboard(items)
+                send_message('Select an item to delete', chat, keyboard)
             else:
                 db.add_item(text)
                 items = db.get_items()
-            message = '\n'.join(items)
-            send_message(message, chat)
+                message = '\n'.join(items)
+                send_message(message, chat)
         except KeyError:
             pass
+
+
+def build_keyboard(items):
+    keyboard = [[item] for item in items]
+    reply_markup = {'keyboard': keyboard, 'one_time_keyboard': True}
+    return json.dumps(reply_markup)
 
 
 def main():

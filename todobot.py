@@ -60,20 +60,45 @@ def handle_updates(updates):
         try:
             text = update['message']['text']
             chat = update['message']['chat']['id']
-            items = db.get_items()
+            items = db.get_items(chat)
+
             if text == '/done':
-                keyboard = build_keyboard(items)
-                send_message('Select an item to delete', chat, keyboard)
+                items = db.get_items(chat)
+                if len(items) != 0:
+                    keyboard = build_keyboard(items)
+                    send_message('Select an item to delete', chat, keyboard)
+                else:
+                    send_message('The list is empty', chat)
+
+            elif text == '/start':
+                send_message("Welcome to your personal To Do list. Send any text to me and I'll store it as an item. "
+                             "Send /done to remove items", chat)
+
+            elif text.startswith('/'):
+                continue
+
             elif text in items:
-                db.delete_item(text)
-                items = db.get_items()
-                keyboard = build_keyboard(items)
-                send_message('Select an item to delete', chat, keyboard)
+                db.delete_item(text, chat)
+                items = db.get_items(chat)
+                if len(items) != 0:
+                    keyboard = build_keyboard(items)
+                    send_message('Select an item to delete', chat, keyboard)
+                else:
+                    send_message('The list is empty', chat)
+
+            elif text == '/list':
+                items = db.get_items(chat)
+                if len(items) != 0:
+                    message = '\n'.join(items)
+                    send_message(message, chat)
+                else:
+                    send_message('The list is empty, type anything you want to add', chat)
+
+
             else:
-                db.add_item(text)
-                items = db.get_items()
-                message = '\n'.join(items)
-                send_message(message, chat)
+                db.add_item(text, chat)
+
+
         except KeyError:
             pass
 

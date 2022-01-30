@@ -30,5 +30,11 @@ class DBHelper:
 
     def get_items(self, owner):
         stmt = 'SELECT description FROM items WHERE owner = (?)'
-        args = (owner, )
+        args = (owner,)
         return [x[0] for x in self.conn.execute(stmt, args)]
+
+    def clear_items(self, owner):
+        stmt = 'DELETE FROM items WHERE owner = (?)'
+        args = (owner,)
+        self.conn.execute(stmt, args)
+        self.conn.commit()

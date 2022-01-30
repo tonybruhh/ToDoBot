@@ -1,12 +1,10 @@
 import json
 import requests
-import time
 import urllib
 
 from dbhelper import DBHelper
-
-
 db = DBHelper()
+db.setup()
 
 TOKEN = '5054349266:AAGAHLTO1iyDXzqH7TGj1da32KA4mDK8f84'
 URL = f'https://api.telegram.org/bot{TOKEN}/'
@@ -39,14 +37,6 @@ def get_last_update_id(updates):
     return max(update_ids)
 
 
-def get_last_chat_id_and_text(updates):
-    num_updates = len(updates["result"])
-    last_update = num_updates - 1
-    text = updates["result"][last_update]["message"]["text"]
-    chat_id = updates["result"][last_update]["message"]["chat"]["id"]
-    return text, chat_id
-
-
 def send_message(text, chat_id, reply_markup=None):
     text = urllib.parse.quote_plus(text)
     url = URL + f"sendMessage?text={text}&chat_id={chat_id}&parse_mode=Markdown"
@@ -74,6 +64,14 @@ def handle_updates(updates):
                 send_message("Welcome to your personal To Do list. Send any text to me and I'll store it as an item. "
                              "Send /done to remove items", chat)
 
+            elif text == '/list':
+                items = db.get_items(chat)
+                if len(items) != 0:
+                    message = '\n'.join(items)
+                    send_message(message, chat)
+                else:
+                    send_message('The list is empty, type anything you want to add', chat)
+
             elif text.startswith('/'):
                 continue
 
@@ -86,18 +84,8 @@ def handle_updates(updates):
                 else:
                     send_message('The list is empty', chat)
 
-            elif text == '/list':
-                items = db.get_items(chat)
-                if len(items) != 0:
-                    message = '\n'.join(items)
-                    send_message(message, chat)
-                else:
-                    send_message('The list is empty, type anything you want to add', chat)
-
-
             else:
                 db.add_item(text, chat)
-
 
         except KeyError:
             pass
@@ -107,19 +95,4 @@ def build_keyboard(items):
     keyboard = [[item] for item in items]
     reply_markup = {'keyboard': keyboard, 'one_time_keyboard': True}
     return json.dumps(reply_markup)
-
-
-def main():
-    db.setup()
-    last_update_id = None
-    while True:
-        updates = get_updates(last_update_id)
-        if len(updates['result']) > 0:
-            last_update_id = get_last_update_id(updates) + 1
-            handle_updates(updates)
-        time.sleep(0.5)
-
-
-if __name__ == '__main__':
-    main()
 

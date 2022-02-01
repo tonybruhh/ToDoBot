@@ -2,7 +2,6 @@ import json
 import requests
 import urllib
 
-
 TOKEN = '5054349266:AAGAHLTO1iyDXzqH7TGj1da32KA4mDK8f84'
 URL = f'https://api.telegram.org/bot{TOKEN}/'
 
@@ -20,7 +19,7 @@ def get_json_from_url(url):
 
 
 def get_updates(offset=None):
-    url = URL + 'getUpdates?timeout=100'
+    url = URL + 'getUpdates?timeout=5'
     if offset:
         url += f'&offset={offset}'
     js = get_json_from_url(url)
@@ -46,3 +45,11 @@ def build_keyboard(items):
     keyboard = [[item] for item in items]
     reply_markup = {'keyboard': keyboard, 'one_time_keyboard': True}
     return json.dumps(reply_markup)
+
+
+def handle_updates(updates):
+    text, chat = None, None
+    for update in updates['result']:
+        text = update['message']['text']
+        chat = update['message']['chat']['id']
+    return text, chat

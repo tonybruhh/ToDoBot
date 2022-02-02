@@ -1,8 +1,10 @@
 import json
 import requests
 import urllib
+from queue import Queue
 
-TOKEN = '5054349266:AAGAHLTO1iyDXzqH7TGj1da32KA4mDK8f84'
+from tokens import TOKEN_TG as TOKEN
+
 URL = f'https://api.telegram.org/bot{TOKEN}/'
 
 
@@ -19,7 +21,7 @@ def get_json_from_url(url):
 
 
 def get_updates(offset=None):
-    url = URL + 'getUpdates?timeout=5'
+    url = URL + 'getUpdates?timeout=10'
     if offset:
         url += f'&offset={offset}'
     js = get_json_from_url(url)
@@ -48,8 +50,10 @@ def build_keyboard(items):
 
 
 def handle_updates(updates):
-    text, chat = None, None
+    todo_queue = Queue()
     for update in updates['result']:
-        text = update['message']['text']
-        chat = update['message']['chat']['id']
-    return text, chat
+        if 'message' in update and 'text' in update['message']:
+            text = update['message']['text']
+            chat = update['message']['chat']['id']
+            todo_queue.put((text, chat))
+    return todo_queue

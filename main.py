@@ -7,15 +7,13 @@ import telegram
 def main():
     last_update_id = None
     while True:
-        text, chat = None, None
         updates = telegram.get_updates(last_update_id)
-        print('1', updates)
+        print(updates)
         if len(updates['result']) > 0:
             last_update_id = telegram.get_last_update_id(updates) + 1
-            text, chat = telegram.handle_updates(updates)
-            if all([text, chat]):
-                todobot.handle_message(text, chat)
-        time.sleep(3)
+            todo_queue = telegram.handle_updates(updates)
+            todobot.handle_message(todo_queue)
+        time.sleep(0.5)
 
 
 if __name__ == '__main__':

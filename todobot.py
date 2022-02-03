@@ -14,7 +14,6 @@ def handle_message(todo_queue):
             items = db.get_items(chat)
 
             if text == '/done':
-                items = db.get_items(chat)
                 if len(items) != 0:
                     keyboard = telegram.build_keyboard(items)
                     telegram.send_message('Select an item to delete', chat, keyboard)
@@ -22,7 +21,6 @@ def handle_message(todo_queue):
                     telegram.send_message('The list is empty', chat)
 
             elif text == '/clear':
-                items = db.get_items(chat)
                 if len(items) != 0:
                     db.clear_items(chat)
                     telegram.send_message('The list has been cleared', chat)
@@ -34,7 +32,6 @@ def handle_message(todo_queue):
                                       " item. Send /done to remove items", chat)
 
             elif text == '/list':
-                items = db.get_items(chat)
                 if len(items) != 0:
                     message = '\n'.join(items)
                     telegram.send_message(message, chat)

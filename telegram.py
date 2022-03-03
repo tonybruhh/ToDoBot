@@ -21,7 +21,7 @@ def get_json_from_url(url):
 
 
 def get_updates(offset=None):
-    url = URL + 'getUpdates?timeout=2'
+    url = URL + 'getUpdates?timeout=5'
     if offset:
         url += f'&offset={offset}'
     js = get_json_from_url(url)
@@ -50,10 +50,10 @@ def build_keyboard(items):
 
 
 def handle_updates(updates):
-    todo_queue = Queue()
+    queue = Queue()
     for update in updates['result']:
         if 'message' in update and 'text' in update['message']:
             text = update['message']['text']
             chat = update['message']['chat']['id']
-            todo_queue.put((text, chat))
-    return todo_queue
+            queue.put((text, chat))
+    return queue

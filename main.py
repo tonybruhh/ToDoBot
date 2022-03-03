@@ -1,6 +1,6 @@
 import time
 
-import todobot
+from todobot import ToDoBot
 import telegram
 
 
@@ -11,8 +11,9 @@ def main():
         print(updates)
         if len(updates['result']) > 0:
             last_update_id = telegram.get_last_update_id(updates) + 1
-            todo_queue = telegram.handle_updates(updates)
-            todobot.handle_message(todo_queue)
+            queue = telegram.handle_updates(updates)
+            todolist = ToDoBot(queue)
+            todolist.run()
         time.sleep(0.5)
 
 

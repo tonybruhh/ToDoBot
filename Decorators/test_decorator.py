@@ -1,22 +1,36 @@
 import telegram
 
-
 from dbhelper import DBHelper
 
 db = DBHelper()
 db.setup()
 
 
+# def func_dict_initiator(command):
+#     def func_dict_decorator(method):
+#         def wrapper(self, text, chat, items):
+#             method(self, text, chat, items)
+#
+#         return wrapper
+#
+#     return func_dict_decorator
+
+
 class ToDoBot:
 
     def __init__(self, todo_queue):
         self.queue = todo_queue
-        self.calls = {
-            '/list': self.call_list,
-            '/done': self.call_delete,
-            '/start': self.call_start,
-            '/clear': self.call_clear
-        }
+        self.calls = dict()
+
+    def func_dict_initiator(chat_command):
+        def func_dict_decorator(method):
+            def wrapper(self, text, chat, items):
+                self.calls[chat_command] = method
+                method(self, text, chat, items)
+
+            return wrapper
+
+        return func_dict_decorator
 
     def run(self):
         queue_size = self.queue.qsize()
@@ -32,6 +46,7 @@ class ToDoBot:
             else:
                 db.add_item(text, chat)
 
+    @func_dict_initiator('/list')
     def call_list(self, text, chat, items):
         if len(items) != 0:
             message = '\n'.join(items)
@@ -62,4 +77,4 @@ class ToDoBot:
         items = db.get_items(chat)
         self.call_delete(text, chat, items)
 
-
+a = ToDoBot()

@@ -1,65 +1,75 @@
 import telegram
 
+from dbdriver import DBDriver
 
-from dbhelper import DBHelper
-
-db = DBHelper()
-db.setup()
-
+database = DBDriver()
+database.setup()
 
 class ToDoBot:
 
+    class UserData:
+        def __init__(self, text, chat_id, items):
+            self.text = text
+            self.chat_id = chat_id
+            self.items = items
+
     def __init__(self, todo_queue):
+        """ The data in queue contains tuples with the text of the message received from
+         the user and user's chat id in (text, chat_id) format """
         self.queue = todo_queue
         self.calls = {
             '/list': self.call_list,
-            '/done': self.call_delete,
+            '/done': self.call_delete_keyboard,
             '/start': self.call_start,
             '/clear': self.call_clear
         }
 
     def run(self):
-        queue_size = self.queue.qsize()
-        for _ in range(queue_size):
-            text, chat = self.queue.get()
-            items = db.get_items(chat)
-            if text in self.calls:
-                self.calls[text](text, chat, items)
-            elif text.startswith('/'):
+        while not self.queue.empty():
+            text, chat_id = self.queue.get()
+            items = database.get_items(chat_id)
+            userdata = self.UserData(text, chat_id, items)
+
+            if userdata.text in self.calls:
+                self.calls[userdata.text](userdata)
+
+            elif userdata.text.startswith('/'):
                 continue
-            elif text in items:
-                self.delete_item(text, chat, items)
+
+            elif userdata.text in userdata.items:
+                self.delete_item(userdata)
+
             else:
-                db.add_item(text, chat)
+                database.add_item(userdata)
 
-    def call_list(self, text, chat, items):
-        if len(items) != 0:
-            message = '\n'.join(items)
-            telegram.send_message(message, chat)
-        else:
-            telegram.send_message('The list is empty, type anything you want to add', chat)
 
-    def call_delete(self, text, chat, items):
-        if len(items) != 0:
-            keyboard = telegram.build_keyboard(items)
-            telegram.send_message('Select an item to delete', chat, keyboard)
-        else:
-            telegram.send_message('The list is empty', chat)
-
-    def call_clear(self, text, chat, items):
-        if len(items) != 0:
-            db.clear_items(chat)
-            telegram.send_message('The list has been cleared', chat)
-        else:
-            telegram.send_message('The list is empty', chat)
-
-    def call_start(self, text, chat, items):
+    def call_start(self, userdata):
         telegram.send_message("Welcome to your personal To Do list. Send any text to me and I'll store it as an"
-                              " item. Send /done to remove items", chat)
+                              " item. Send /done to remove items", userdata.chat_id)
 
-    def delete_item(self, text, chat, items):
-        db.delete_item(text, chat)
-        items = db.get_items(chat)
-        self.call_delete(text, chat, items)
+    def call_list(self, userdata):
+        if userdata.items:
+            text_of_items = '\n'.join(userdata.items)
+            telegram.send_message(text_of_items, userdata.chat_id)
+        else:
+            telegram.send_message('The list is empty, type anything you want to add', userdata.chat_id)
 
+    def call_clear(self, userdata):
+        if userdata.items:
+            database.clear_items(userdata)
+            telegram.send_message('The list has been cleared', userdata.chat_id)
+        else:
+            telegram.send_message('The list is empty', userdata.chat_id)
+
+    def call_delete_keyboard(self, userdata):
+        if userdata.items:
+            keyboard = telegram.build_keyboard(userdata.items)
+            telegram.send_message('Select an item to delete', userdata.chat_id, keyboard)
+        else:
+            telegram.send_message('The list is empty', userdata.chat_id)
+
+    def delete_item(self, userdata):
+        database.delete_item(userdata)
+        userdata.items.remove(userdata.text)
+        self.call_delete_keyboard(userdata)
 

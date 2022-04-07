@@ -9,7 +9,7 @@ def main():
     while True:
         updates = telegram.get_updates(last_update_id)
         print(updates)
-        if len(updates['result']) > 0:
+        if updates['result']:
             last_update_id = telegram.get_last_update_id(updates) + 1
             queue = telegram.handle_updates(updates)
             todolist = ToDoBot(queue)

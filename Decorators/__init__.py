@@ -1,1 +1,0 @@
-from test_decorator import func_dict_maker
